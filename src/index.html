@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talking Avatar</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
+    <div class="container">
+        <div class="avatar" id="avatar">
+            <img src="img/avatar.png" alt="Avatar Closed Mouth" class="closed-mouth">
+            <img src="img/avatar2.png" alt="Avatar Open Mouth" class="open-mouth">
+        </div>
+        <div class="controls">
+            <div class="show-settings">
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="show-settings" name="settings" value="show" onchange="showSettings()">
+                        <label for="show-settings">Show Settings</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="hide-settings" name="settings" value="hide" checked onchange="hideSettings()">
+                        <label for="hide-settings">Hide Settings</label>
+                    </div>
+                </div>
+    
+            </div>
+            <div class="voice-controls">
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="en" name="language" value="en" checked onchange="updateVoices()">
+                        <label for="en">English</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="es" name="language" value="es" onchange="updateVoices()">
+                        <label for="es">Spanish</label>
+                    </div>
+                </div>
+                <div class="mode-selector">
+                    <div class="radio-option">
+                        <input type="radio" id="echo" name="mode" value="echo" checked onchange="updateMode()">
+                        <label for="echo">Echo Mode</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="chat" name="mode" value="chat" onchange="updateMode()">
+                        <label for="chat">Chat Mode</label>
+                    </div>
+                </div>
+                <div class="api-key-input" id="apiKeyInput">
+                    <input type="password" id="apiKey" placeholder="Enter your Azure OpenAI API Key" onchange="saveApiKey()">
+                    <input type="text" id="azureResourceName" placeholder="Enter your Azure Resource Name" onchange="saveAzureConfig()">
+                    <input type="text" id="deploymentName" placeholder="Enter your Deployment Name" onchange="saveAzureConfig()">
+                </div>
+            </div>
+            <textarea id="textToSpeak" placeholder="Type something for the avatar to say...">Hello! I am your talking avatar. How can I help you today?</textarea>
+            <div class="button-group">
+                <button id="speakButton" onclick="speak()">Speak</button>
+                <button id="stopButton" onclick="stop()">Stop</button>
+                <button class="mic-button" id="micButton" onclick="toggleListening()">🎤</button>
+            </div>
+            <div class="status-text" id="statusText"></div>
+        </div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 
