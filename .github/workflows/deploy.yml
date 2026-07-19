@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/configure-pages@v4
+
       - name: Inject Google Client ID from secrets
         run: |
           node -e "
@@ -24,11 +26,6 @@ jobs:
           "
         env:
           CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-
-      - name: Verify injection
-        run: cat config.js
-
-      - uses: actions/configure-pages@v4
 
       - uses: actions/upload-pages-artifact@v3
         with:
