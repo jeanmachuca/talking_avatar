@@ -2,6 +2,7 @@ const Auth = (() => {
   let currentUser = null;
   let accessToken = null;
   let listeners = [];
+  let restored = false;
 
   function loadSession() {
     const raw = localStorage.getItem(APP_CONFIG.storageKey);
@@ -32,7 +33,7 @@ const Auth = (() => {
 
   function onAuthChange(fn) {
     listeners.push(fn);
-    if (currentUser) fn(currentUser);
+    if (currentUser && restored) fn(currentUser);
     return () => { listeners = listeners.filter(f => f !== fn); };
   }
 
@@ -45,11 +46,11 @@ const Auth = (() => {
       photoURL: payload.picture,
     };
     saveSession(user);
-    requestDriveAccess();
+    requestDriveAccess({ prompt: 'consent' });
     return user;
   }
 
-  function requestDriveAccess() {
+  function requestDriveAccess(opts) {
     if (!window.google?.accounts?.oauth2) return;
 
     const tokenClient = google.accounts.oauth2.initTokenClient({
@@ -75,7 +76,17 @@ const Auth = (() => {
         notify();
       },
     });
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    tokenClient.requestAccessToken(opts || { prompt: 'consent' });
+  }
+
+  function restoreSession() {
+    loadSession();
+    if (currentUser && isGoogleUser() && !accessToken) {
+      requestDriveAccess({ prompt: '' });
+    } else {
+      notify();
+    }
+    restored = true;
   }
 
   function signOut() {
@@ -125,7 +136,5 @@ const Auth = (() => {
     notify();
   }
 
-  loadSession();
-
-  return { getUser, getToken, isSignedIn, isGoogleUser, onAuthChange, signIn, signOut, renderButton, guestSignIn };
+  return { getUser, getToken, isSignedIn, isGoogleUser, onAuthChange, signIn, signOut, renderButton, guestSignIn, restoreSession };
 })();
