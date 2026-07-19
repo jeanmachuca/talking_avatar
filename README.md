@@ -67,8 +67,9 @@ If you fork this project, you need your own Google OAuth credentials.
 2. Click **Create Credentials** → **OAuth client ID**
 3. Application type: **Web application**
 4. Name: "Talking Avatar"
-5. Authorized redirect URIs: add `https://<your-username>.github.io/<repo-name>/src/`
-6. Copy the **Client ID**
+5. **Authorized JavaScript origins** — add `https://<your-username>.github.io`
+6. **Authorized redirect URIs** — add `https://<your-username>.github.io/<repo-name>/src/`
+7. Copy the **Client ID**
 
 ### 4. Add to GitHub Secrets
 
