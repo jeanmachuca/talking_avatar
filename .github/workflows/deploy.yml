@@ -16,7 +16,15 @@ jobs:
 
       - name: Inject Google Client ID from secrets
         run: |
-          sed -i "s/__GOOGLE_CLIENT_ID__/${{ secrets.GOOGLE_CLIENT_ID }}/g" config.js
+          node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('config.js', 'utf8');
+            const replaced = content.replace('__GOOGLE_CLIENT_ID__', process.env.CLIENT_ID);
+            fs.writeFileSync('config.js', replaced);
+            console.log('Client ID injected:', process.env.CLIENT_ID ? 'yes' : 'EMPTY');
+          "
+        env:
+          CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       - uses: actions/configure-pages@v4
 
