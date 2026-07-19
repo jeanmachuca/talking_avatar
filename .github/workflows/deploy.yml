@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build dist from src
-        run: cp -r src dist
+        run: cp -r src dist && cp .nojekyll dist/
 
       - name: Inject Google Client ID from secrets
         run: |
