@@ -115,6 +115,9 @@ async function handleAuthChange(user) {
 
     if (user) {
         await loadConfig();
+        if (typeof DriveVault !== 'undefined' && Auth.isGoogleUser() && !DriveVault.isAvailable()) {
+            alert('Google Drive is not available. Your Azure OpenAI config will be stored in browser only (not synced across devices).');
+        }
         if (getCurrentMode() === 'chat' && !isConfigValid()) {
             showConfigForm(Auth.isGoogleUser() ? 'google' : 'guest');
         } else {

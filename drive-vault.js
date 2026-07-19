@@ -1,5 +1,48 @@
 const DriveVault = (() => {
   let cachedConfig = null;
+  let driveAvailable = null;
+
+  async function testConnection() {
+    const token = Auth.getToken();
+    if (!token) { driveAvailable = false; return false; }
+
+    const testFileName = '__drive_test_' + Date.now();
+    try {
+      const metadata = { name: testFileName, parents: ['appDataFolder'] };
+      const blob = new Blob(['{}'], { type: 'application/json' });
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+
+      const createRes = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }
+      );
+
+      if (!createRes.ok) {
+        const err = await createRes.text();
+        console.warn('Drive test create failed:', createRes.status, err);
+        driveAvailable = false;
+        return false;
+      }
+
+      const { id } = await createRes.json();
+
+      const delRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${id}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      driveAvailable = delRes.ok || delRes.status === 404;
+      return driveAvailable;
+    } catch (e) {
+      console.warn('Drive test error:', e);
+      driveAvailable = false;
+      return false;
+    }
+  }
+
+  function isAvailable() { return driveAvailable; }
 
   async function getConfig() {
     if (cachedConfig) return cachedConfig;
@@ -85,5 +128,5 @@ const DriveVault = (() => {
 
   function clearCache() { cachedConfig = null; }
 
-  return { getConfig, saveConfig, clearCache };
+  return { testConnection, isAvailable, getConfig, saveConfig, clearCache };
 })();

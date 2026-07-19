@@ -62,7 +62,13 @@ const Auth = (() => {
           return;
         }
         accessToken = tokenResponse.access_token;
-        notify();
+        DriveVault.testConnection().then(ok => {
+          if (!ok) {
+            console.warn('Drive vault unavailable — config will use browser storage only');
+            accessToken = null;
+          }
+          notify();
+        });
       },
       error_callback: (err) => {
         console.warn('Drive token error:', err);

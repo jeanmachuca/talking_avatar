@@ -96,6 +96,10 @@ export function showConfigForm(userType) {
         title.textContent = 'Configure Azure OpenAI (Guest Mode)';
         warning.textContent = 'API key stored in browser localStorage. Do not use in production.';
         warning.classList.add('visible');
+    } else if (typeof DriveVault !== 'undefined' && !DriveVault.isAvailable()) {
+        title.textContent = 'Configure Azure OpenAI';
+        warning.textContent = 'Google Drive is unavailable. API key stored in browser localStorage only.';
+        warning.classList.add('visible');
     } else {
         title.textContent = 'Configure Azure OpenAI';
         warning.textContent = 'API key saved securely to your Google Drive.';
