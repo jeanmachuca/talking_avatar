@@ -6,4 +6,3 @@ const APP_CONFIG = {
   appName: 'Talking Avatar',
   scopes: 'https://www.googleapis.com/auth/drive.appdata',
 };
-
