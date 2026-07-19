@@ -52,9 +52,13 @@ const Auth = (() => {
   function requestDriveAccess() {
     if (!window.google?.accounts?.oauth2) return;
 
+    const redirectUri = window.location.href.split('?')[0].split('#')[0];
+
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: APP_CONFIG.googleClientId,
       scope: APP_CONFIG.scopes,
+      ux_mode: 'redirect',
+      redirect_uri: redirectUri,
       callback: (tokenResponse) => {
         if (tokenResponse.error) {
           console.warn('Drive access denied:', tokenResponse.error);
@@ -64,8 +68,12 @@ const Auth = (() => {
         accessToken = tokenResponse.access_token;
         notify();
       },
+      error_callback: (err) => {
+        console.warn('Drive token error (COOP blocked popup):', err);
+        notify();
+      },
     });
-    tokenClient.requestAccessToken();
+    tokenClient.requestAccessToken({ prompt: 'consent' });
   }
 
   function signOut() {
@@ -115,7 +123,20 @@ const Auth = (() => {
     notify();
   }
 
+  function checkRedirectCallback() {
+    const hash = window.location.hash;
+    if (!hash || !hash.includes('access_token')) return;
+
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('access_token');
+    if (token) {
+      accessToken = token;
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+
   loadSession();
+  checkRedirectCallback();
 
   return { getUser, getToken, isSignedIn, isGoogleUser, onAuthChange, signIn, signOut, renderButton, guestSignIn };
 })();
