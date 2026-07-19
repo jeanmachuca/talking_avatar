@@ -1,22 +1,27 @@
-import { 
-    stop, 
-    speak 
+import {
+    stop,
+    speak,
 } from './speech.js';
 
-import { 
-    saveApiKey, 
-    saveAzureConfig, 
-    getChatResponse 
+import {
+    loadConfig,
+    saveApiKey,
+    saveAzureConfig,
+    getChatResponse,
+    isConfigValid,
 } from './ai.js';
 
-import { 
-    updateStatusText, 
-    updateVoices, 
-    updateMode, 
-    toggleTheme 
+import {
+    updateStatusText,
+    updateVoices,
+    updateMode,
+    toggleTheme,
+    updateAuthUI,
+    showConfigForm,
+    hideConfigForm,
 } from './ui.js';
 
-import { 
+import {
     getCurrentMode,
     speechRecognition,
     setListening,
@@ -24,43 +29,25 @@ import {
     initializeSpeechRecognition,
     setupSpeechRecognitionHandlers,
     startSpeechRecognition,
-    stopSpeechRecognition
+    stopSpeechRecognition,
 } from './state.js';
 
-
-// Initialize speech recognition
 if (!initializeSpeechRecognition()) {
     console.warn('Speech recognition initialization failed');
 }
 
-/**
- * Shows the settings panel
- */
 export function showSettings() {
     const voiceControls = document.querySelector('.voice-controls');
-    if (!voiceControls) {
-        console.warn('Voice controls element not found');
-        return;
-    }
+    if (!voiceControls) return;
     voiceControls.classList.add('visible');
 }
 
-/**
- * Hides the settings panel
- */
 export function hideSettings() {
     const voiceControls = document.querySelector('.voice-controls');
-    if (!voiceControls) {
-        console.warn('Voice controls element not found');
-        return;
-    }
+    if (!voiceControls) return;
     voiceControls.classList.remove('visible');
 }
 
-
-/**
- * Toggles the speech recognition state
- */
 export function toggleListening() {
     if (!speechRecognition) {
         updateStatusText('recognitionNotSupported');
@@ -68,12 +55,11 @@ export function toggleListening() {
     }
 
     const micButton = document.getElementById('micButton');
-    
+
     if (!isListening()) {
-        // Start listening
         const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
         const languageCode = selectedLanguage === 'en' ? 'en-US' : 'es-ES';
-        
+
         setupSpeechRecognitionHandlers(
             () => {
                 setListening(true);
@@ -85,7 +71,6 @@ export function toggleListening() {
                 document.getElementById('textToSpeak').value = transcript;
                 updateStatusText('youSaid' + transcript);
 
-                // Wait a moment before responding
                 setTimeout(async () => {
                     if (getCurrentMode() === 'chat') {
                         updateStatusText('gettingAIResponse');
@@ -95,7 +80,6 @@ export function toggleListening() {
                             speak();
                         }
                     } else {
-                        // Echo mode - just repeat what was said
                         speak();
                     }
                 }, 1000);
@@ -119,17 +103,29 @@ export function toggleListening() {
     }
 }
 
-/**
- * Stops the speech recognition process
- */
 function stopListening() {
     stopSpeechRecognition();
     setListening(false);
     document.getElementById('micButton').classList.remove('listening');
     updateStatusText('');
-} 
+}
 
-// Make functions available globally
+async function handleAuthChange(user) {
+    updateAuthUI(user);
+
+    if (user) {
+        await loadConfig();
+        if (getCurrentMode() === 'chat' && !isConfigValid()) {
+            showConfigForm(Auth.isGoogleUser() ? 'google' : 'guest');
+        } else {
+            hideConfigForm();
+        }
+    } else {
+        hideConfigForm();
+        if (typeof DriveVault !== 'undefined') DriveVault.clearCache();
+    }
+}
+
 window.speak = speak;
 window.stop = stop;
 window.toggleListening = toggleListening;
@@ -137,11 +133,15 @@ window.updateVoices = updateVoices;
 window.updateMode = updateMode;
 window.toggleTheme = toggleTheme;
 window.saveApiKey = saveApiKey;
-window.saveAzureConfig = saveAzureConfig;
+window.saveAzureConfig = async function () {
+    await saveAzureConfig();
+    hideConfigForm();
+};
 window.showSettings = showSettings;
 window.hideSettings = hideSettings;
 
-// Initialize mode on page load
 document.addEventListener('DOMContentLoaded', () => {
+    Auth.onAuthChange(handleAuthChange);
     updateMode();
+    handleAuthChange(Auth.getUser());
 });

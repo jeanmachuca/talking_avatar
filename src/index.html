@@ -5,15 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Talking Avatar</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../config.js"></script>
+    <script src="../auth.js"></script>
+    <script src="../drive-vault.js"></script>
 </head>
 <body>
     <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
     <div class="container">
+        <div class="auth-section">
+            <div id="userDisplay" class="user-display"></div>
+            <div id="loginContainer" class="login-container"></div>
+        </div>
         <div class="avatar" id="avatar">
             <img src="img/avatar.png" alt="Avatar Closed Mouth" class="closed-mouth">
             <img src="img/avatar2.png" alt="Avatar Open Mouth" class="open-mouth">
         </div>
         <div class="controls">
+            <div id="configForm" class="config-form hidden">
+                <h3 id="configTitle">Configure Azure OpenAI</h3>
+                <input type="password" id="apiKey" placeholder="Enter your Azure OpenAI API Key">
+                <input type="text" id="azureResourceName" placeholder="Enter your Azure Resource Name">
+                <input type="text" id="deploymentName" placeholder="Enter your Deployment Name">
+                <button id="saveConfigBtn" onclick="saveAzureConfig()">Save</button>
+                <p class="config-warning" id="configWarning"></p>
+            </div>
             <div class="show-settings">
                 <div class="radio-group">
                     <div class="radio-option">
@@ -25,7 +41,6 @@
                         <label for="hide-settings">Hide Settings</label>
                     </div>
                 </div>
-    
             </div>
             <div class="voice-controls">
                 <div class="radio-group">
@@ -48,11 +63,6 @@
                         <label for="chat">Chat Mode</label>
                     </div>
                 </div>
-                <div class="api-key-input" id="apiKeyInput">
-                    <input type="password" id="apiKey" placeholder="Enter your Azure OpenAI API Key" onchange="saveApiKey()">
-                    <input type="text" id="azureResourceName" placeholder="Enter your Azure Resource Name" onchange="saveAzureConfig()">
-                    <input type="text" id="deploymentName" placeholder="Enter your Deployment Name" onchange="saveAzureConfig()">
-                </div>
             </div>
             <textarea id="textToSpeak" placeholder="Type something for the avatar to say...">Hello! I am your talking avatar. How can I help you today?</textarea>
             <div class="button-group">
@@ -65,4 +75,4 @@
     </div>
     <script type="module" src="js/main.js"></script>
 </body>
-</html> 
+</html>

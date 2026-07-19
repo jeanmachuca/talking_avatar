@@ -2,50 +2,80 @@ import { cleanMarkdown } from './speech.js';
 import { updateStatusText } from './ui.js';
 import { TEXTS } from './constants.js';
 
-/**
- * Configuration object for Azure OpenAI API
- * @type {Object}
- */
 const config = {
-    /** @type {string} */
-    apiKey: localStorage.getItem('azure_openai_api_key') || '',
-    /** @type {string} */
-    azureResourceName: localStorage.getItem('azure_resource_name') || '',
-    /** @type {string} */
-    deploymentName: localStorage.getItem('deployment_name') || ''
+    apiKey: '',
+    azureResourceName: '',
+    deploymentName: '',
 };
 
-/**
- * Saves the API key to local storage
- */
-export function saveApiKey() {
-    config.apiKey = document.getElementById('apiKey').value;
-    localStorage.setItem('azure_openai_api_key', config.apiKey);
+export async function loadConfig() {
+    if (typeof Auth !== 'undefined' && Auth.isGoogleUser() && Auth.getToken()) {
+        try {
+            const driveConfig = await DriveVault.getConfig();
+            if (driveConfig) {
+                config.apiKey = driveConfig.apiKey || '';
+                config.azureResourceName = driveConfig.resourceName || '';
+                config.deploymentName = driveConfig.deploymentName || '';
+                populateForm();
+                return;
+            }
+        } catch (e) {
+            console.warn('Failed to load config from Drive:', e);
+        }
+    }
+
+    config.apiKey = localStorage.getItem('azure_openai_api_key') || '';
+    config.azureResourceName = localStorage.getItem('azure_resource_name') || '';
+    config.deploymentName = localStorage.getItem('deployment_name') || '';
+    populateForm();
 }
 
-/**
- * Saves the Azure configuration to local storage
- */
-export function saveAzureConfig() {
+function populateForm() {
+    const apiKeyEl = document.getElementById('apiKey');
+    const resourceEl = document.getElementById('azureResourceName');
+    const deploymentEl = document.getElementById('deploymentName');
+    if (apiKeyEl) apiKeyEl.value = config.apiKey;
+    if (resourceEl) resourceEl.value = config.azureResourceName;
+    if (deploymentEl) deploymentEl.value = config.deploymentName;
+}
+
+export async function saveApiKey() {
+    config.apiKey = document.getElementById('apiKey').value;
+    await persistConfig();
+}
+
+export async function saveAzureConfig() {
     config.azureResourceName = document.getElementById('azureResourceName').value;
     config.deploymentName = document.getElementById('deploymentName').value;
-    localStorage.setItem('azure_resource_name', config.azureResourceName);
-    localStorage.setItem('deployment_name', config.deploymentName);
+    await persistConfig();
 }
 
-/**
- * Checks if the API configuration is valid
- * @returns {boolean} True if configuration is valid, false otherwise
- */
-function isConfigValid() {
+async function persistConfig() {
+    if (typeof Auth !== 'undefined' && Auth.isGoogleUser() && Auth.getToken()) {
+        try {
+            await DriveVault.saveConfig({
+                apiKey: config.apiKey,
+                resourceName: config.azureResourceName,
+                deploymentName: config.deploymentName,
+            });
+            updateStatusText('configSaved');
+            return;
+        } catch (e) {
+            console.warn('Failed to save config to Drive:', e);
+            updateStatusText('configSaveError');
+        }
+    }
+
+    localStorage.setItem('azure_openai_api_key', config.apiKey);
+    localStorage.setItem('azure_resource_name', config.azureResourceName);
+    localStorage.setItem('deployment_name', config.deploymentName);
+    updateStatusText('configSaved');
+}
+
+export function isConfigValid() {
     return config.apiKey && config.azureResourceName && config.deploymentName;
 }
 
-/**
- * Gets a chat response from the Azure OpenAI API
- * @param {string} userInput - The user's input text
- * @returns {Promise<string|null>} The AI's response or null if there was an error
- */
 export async function getChatResponse(userInput) {
     if (!isConfigValid()) {
         updateStatusText('enterConfigFirst');
@@ -61,25 +91,25 @@ export async function getChatResponse(userInput) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'api-key': config.apiKey
+                'api-key': config.apiKey,
             },
             body: JSON.stringify({
                 messages: [
                     {
-                        role: "system",
-                        content: TEXTS[isSpanish ? 'es' : 'en'].systemPrompt
+                        role: 'system',
+                        content: TEXTS[isSpanish ? 'es' : 'en'].systemPrompt,
                     },
                     {
-                        role: "user",
-                        content: userInput
-                    }
+                        role: 'user',
+                        content: userInput,
+                    },
                 ],
                 max_tokens: isSpanish ? 100 : 200,
                 temperature: 0.7,
                 top_p: 0.95,
                 frequency_penalty: 0,
-                presence_penalty: 0
-            })
+                presence_penalty: 0,
+            }),
         });
 
         if (!response.ok) {
@@ -88,7 +118,7 @@ export async function getChatResponse(userInput) {
 
         const data = await response.json();
         const aiResponse = cleanMarkdown(data.choices[0].message.content);
-        
+
         updateStatusText('aiResponseObtained');
         return aiResponse;
     } catch (error) {
@@ -96,4 +126,4 @@ export async function getChatResponse(userInput) {
         updateStatusText('errorGettingResponse');
         return null;
     }
-} 
+}
